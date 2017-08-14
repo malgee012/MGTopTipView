@@ -85,7 +85,7 @@ static NSMutableDictionary *_tempDict;
             
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 
-                [UIView animateWithDuration:2 animations:^{
+                [UIView animateWithDuration:0.5 animations:^{
                     
                     self.frame = CGRectMake(0, -_viewHeight, MGSCREENWIDTH, _viewHeight);
                     
@@ -100,7 +100,6 @@ static NSMutableDictionary *_tempDict;
                         [self.delegate topTipViewDidAppear:self];
                     }
 
-                    
                 }];
             });
             
