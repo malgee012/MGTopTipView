@@ -23,6 +23,7 @@
 @end
 
 NSString *_contents;
+
 @implementation MGTopTipView
 
 static NSMutableDictionary *_tempDict;
@@ -88,6 +89,8 @@ static NSMutableDictionary *_tempDict;
                     
                     self.frame = CGRectMake(0, -_viewHeight, MGSCREENWIDTH, _viewHeight);
                     
+                } completion:^(BOOL finished) {
+                    
                     [self removeFromSuperview];
                     
                     [_tempDict removeAllObjects];
@@ -96,6 +99,7 @@ static NSMutableDictionary *_tempDict;
                         
                         [self.delegate topTipViewDidAppear:self];
                     }
+
                     
                 }];
             });
@@ -106,11 +110,25 @@ static NSMutableDictionary *_tempDict;
     
 }
 
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
+{
+    if ([keyPath isEqualToString:@"frame"]) {
+        
+        NSLog(@"self.frame.y = %f", self.frame.origin.y);
+    }
+
+}
+
 - (instancetype)initWithFrame:(CGRect)frame
 {
     if (self = [super initWithFrame:frame]) {
         
         [self setupSubviews];
+        
+        [self addObserver:self
+               forKeyPath:@"frame"
+                  options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld
+                  context:nil];
         
     }
     return self;
@@ -154,7 +172,6 @@ static NSMutableDictionary *_tempDict;
     
     self.contentLbl.textAlignment = NSTextAlignmentCenter;
 }
-
 
 - (CGFloat)heightWithFont:(UIFont *)font constrainedToWidth:(CGFloat)width
 {
@@ -221,6 +238,11 @@ static NSMutableDictionary *_tempDict;
     }
     
     return _contentLbl;
+}
+
+- (void)dealloc
+{
+    [self removeObserver:self forKeyPath:@"frame"];
 }
 
 
