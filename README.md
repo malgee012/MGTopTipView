@@ -1,4 +1,4 @@
-##落幕式用户提示
+## 落幕式用户提示
 
 **效果图**
 
@@ -7,7 +7,7 @@
 </p>
 
 
-##一句代码搞定
+## 一句代码搞定
 
 ```
 [MGTopTipView showTopTipContent:@"这是我的测试内容" toView:self.view.window]
