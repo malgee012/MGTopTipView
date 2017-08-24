@@ -16,6 +16,8 @@
 }
 @property (nonatomic, copy) NSString        *content;
 
+@property (nonatomic, strong) CALayer       *bottomLayer;
+
 @property (nonatomic, strong) UILabel       *contentLbl;
 
 @property (nonatomic, strong) MGTopTipView  *topTipHUD;
@@ -48,11 +50,9 @@ static NSMutableDictionary *_tempDict;
     
     if (topTipHUD == nil)
     {
-        MGTopTipView *topTipHUD = [MGTopTipView showHUDAddedTo:view animated:YES];
+        MGTopTipView *topTipHUD = [MGTopTipView showHUDAddedTo:view animated:YES color:color];
         
         _tempDict[@"TipView"] = topTipHUD;
-        
-        topTipHUD.backgroundColor = [UIColor brownColor];
         
         topTipHUD.content = content;
         
@@ -62,9 +62,9 @@ static NSMutableDictionary *_tempDict;
     return topTipHUD;
 }
 
-+ (instancetype)showHUDAddedTo:(UIView *)view animated:(BOOL)animated
++ (instancetype)showHUDAddedTo:(UIView *)view animated:(BOOL)animated color:(UIColor *)color
 {
-    MGTopTipView *topTipHUD = [[self alloc] init];
+    MGTopTipView *topTipHUD = [[self alloc] initWithColor:color];
     
     [view addSubview:topTipHUD];
     
@@ -77,7 +77,7 @@ static NSMutableDictionary *_tempDict;
 {
     if (animated)
     {
-        [UIView animateWithDuration:2.0f animations:^{
+        [UIView animateWithDuration:1.0f animations:^{
             
             self.frame = CGRectMake(0, 0, MGSCREENWIDTH, _viewHeight);
             
@@ -118,33 +118,96 @@ static NSMutableDictionary *_tempDict;
 
 }
 
-- (instancetype)initWithFrame:(CGRect)frame
+- (instancetype)initWithColor:(UIColor *)color
 {
-    if (self = [super initWithFrame:frame]) {
+    if (self = [super init]) {
         
-        [self setupSubviews];
+        [self setupSubviewsWithColor:color];
         
         [self addObserver:self
                forKeyPath:@"frame"
                   options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld
                   context:nil];
         
+        self.userInteractionEnabled = YES;
+        
+        self.contentLbl.userInteractionEnabled = YES;
+        
+        UISwipeGestureRecognizer *recognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:self
+                                                                                         action:@selector(handleSwipe:)];
+        recognizer.direction = UISwipeGestureRecognizerDirectionUp;
+        
+        [self addGestureRecognizer:recognizer];
+
     }
     return self;
 }
 
-- (void)setupSubviews
+- (void)setupSubviewsWithColor:(UIColor *)color
 {
+    [self.layer addSublayer:self.bottomLayer];
+    
+    _bottomLayer.backgroundColor = color.CGColor;
+    
     [self addSubview:self.contentLbl];
+    
     
     CGFloat txtHeight = [self heightWithFont:[UIFont systemFontOfSize:14]
                           constrainedToWidth:MGSCREENWIDTH - 30];
     
-    _viewHeight = txtHeight + 30;
+    _viewHeight = txtHeight + 30   + 100;
     
     self.frame = CGRectMake(0, -_viewHeight, MGSCREENWIDTH, _viewHeight);
     
-    _contentLbl.frame = CGRectMake(17, 10, MGSCREENWIDTH - 17 * 2, _viewHeight - 10);
+    self.bottomLayer.frame = CGRectMake(0, 0, MGSCREENWIDTH, txtHeight + 30);
+    
+    _contentLbl.frame = CGRectMake(17, 10, MGSCREENWIDTH - 17 * 2, _viewHeight - 10 - 100);
+    
+}
+
+
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
+{
+    
+    CGPoint point1 = [self convertPoint:point toView:self];
+    
+    if ([self pointInside:point1 withEvent:event])
+    {
+        return self;
+    }
+    else
+    {
+        return [super hitTest:point withEvent:event];
+    }
+    
+    return self;
+}
+
+- (void)handleSwipe:(UISwipeGestureRecognizer *)recognizer
+{
+
+    if (recognizer.direction == UISwipeGestureRecognizerDirectionUp ) {
+        
+        [UIView animateWithDuration:0.5 animations:^{
+            
+            self.frame = CGRectMake(0, -_viewHeight, MGSCREENWIDTH, _viewHeight);
+            
+        } completion:^(BOOL finished) {
+            
+            [self removeFromSuperview];
+            
+            [_tempDict removeAllObjects];
+            
+            if ([self.delegate respondsToSelector:@selector(topTipViewDidAppear:)]) {
+                
+                [self.delegate topTipViewDidAppear:self];
+            }
+            
+        }];
+
+    }
+    
 }
 
 
@@ -237,6 +300,15 @@ static NSMutableDictionary *_tempDict;
     }
     
     return _contentLbl;
+}
+
+- (CALayer *)bottomLayer
+{
+    if (!_bottomLayer) {
+        _bottomLayer = [[CALayer alloc] init];
+        
+    }
+    return _bottomLayer;
 }
 
 - (void)dealloc

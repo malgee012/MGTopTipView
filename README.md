@@ -25,3 +25,5 @@
  */
 - (void)topTipViewDidAppear:(MGTopTipView *)topTipView;
 ```
+
+#### 新增 1.添加手势，手动向上滑隐藏落幕
